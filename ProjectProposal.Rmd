@@ -1,0 +1,54 @@
+---
+title: "Project Proposal - Walkability Initial Data Examination"
+author: "Group E"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r, include = FALSE}
+library(mosaic)
+options(digits = 6)
+library(Stat2Data)
+library(GGally)
+library(readr)
+library(ggformula)
+```
+
+#### Read in SLD
+
+```{r}
+SLD <- read_csv("data/SLD.csv", show_col_types = FALSE)
+```
+
+```{r}
+View(SLD)
+```
+
+
+```{r}
+colnames(SLD)
+Ranking_SLD <- subset(SLD, select = c(NatWalkInd, D2A_Ranked, D2B_Ranked, D3B_Ranked, D4A_Ranked))
+
+favstats (~NatWalkInd, data =SLD )
+```
+
+
+```{r}
+gf_dhistogram (~NatWalkInd, data =SLD, bins=10 )%>%
+  gf_density()
+```
+
+
+```{r}
+modSLD <- subset(SLD, select = c(NatWalkInd, AutoOwn0, Pct_AO0, AutoOwn1, Pct_AO1))
+ggpairs(modSLD)
+```
+
