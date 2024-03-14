@@ -52,3 +52,10 @@ modSLD <- subset(SLD, select = c(NatWalkInd, AutoOwn0, Pct_AO0, AutoOwn1, Pct_AO
 ggpairs(modSLD)
 ```
 
+```{r}
+NewYork_SanFrancisco_data <- SLD %>%
+  filter(CSA_Name == "New York-Newark, NY-NJ-CT-PA" | CSA_Name == "San Jose-San Francisco-Oakland, CA")
+
+write.csv(NewYork_SanFrancisco_data, "C:/Users/llync/Documents/GitHub/STAT230-FinalGroupProject/data/NewYork_SanFrancisco_data.csv")
+```
+
