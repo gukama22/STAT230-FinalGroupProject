@@ -17,9 +17,10 @@ output:
 library(mosaic)
 options(digits = 6)
 library(Stat2Data)
-library(GGally)
 library(readr)
 library(ggformula)
+library(dplyr)
+library(hrbrthemes)
 ```
 
 #### Read in SLD
@@ -42,8 +43,7 @@ favstats (~NatWalkInd, data =SLD )
 
 
 ```{r}
-gf_dhistogram (~NatWalkInd, data =SLD, bins=10 )%>%
-  gf_density()
+
 ```
 
 
@@ -57,5 +57,35 @@ NewYork_SanFrancisco_data <- SLD %>%
   filter(CSA_Name == "New York-Newark, NY-NJ-CT-PA" | CSA_Name == "San Jose-San Francisco-Oakland, CA")
 
 write.csv(NewYork_SanFrancisco_data, "C:/Users/llync/Documents/GitHub/STAT230-FinalGroupProject/data/NewYork_SanFrancisco_data.csv")
+
+NewYork_data_Walkability_Index <- NewYork_SanFrancisco_data%>%
+  filter(CSA_Name == "New York-Newark, NY-NJ-CT-PA")
+
+SanFrancisco_data_Walkability_Index <- NewYork_SanFrancisco_data%>%
+  filter(CSA_Name == "San Jose-San Francisco-Oakland, CA")
+
+#SanFran_NewYork_bindcols <-
+#  bind_cols(NewYork_data_Walkability_Index, SanFrancisco_data_Walkability_Index)
+
+gf_dhistogram (~NatWalkInd, data =NewYork_data, bins=10 )%>%
+  gf_density()
+
+library(ggplot2)
+
+# Assuming you have two datasets named data1 and data2
+p <- ggplot() +
+  # Top
+  geom_density(data = NewYork_data_Walkability_Index, aes(x = NatWalkInd, y = ..density..), fill = "#69b3a2") +
+  geom_label(data = NULL, aes(x = 4.5, y = 0.25, label = "Walkability Index in NY"), color = "#69b3a2") +
+  # Bottom
+  geom_density(data = SanFrancisco_data_Walkability_Index, aes(x = NatWalkInd, y = -..density..), fill = "#404080") +
+  geom_label(data = NULL, aes(x = 4.5, y = -0.25, label = "Walkability Index in SanFran"), color = "#404080") +
+  theme_ipsum() +
+  xlab("value of x")
+p
+
+
+
+
 ```
 
