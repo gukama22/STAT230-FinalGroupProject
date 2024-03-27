@@ -54,8 +54,8 @@ create_density_plots(SanFrancisco_data)
 ```
 
 ```{r}
-#initial test of vars in lm
-lmTest <- lm(CBSA_POP, BSA_EMP,data = NewYork_SanFrancisco_data)
+#initial test of vars in regression 
+lmTest <- lm(Ac_Land ~ Ac_Unpr, data = NewYork_SanFrancisco_data)
 
 msummary(lmTest)
 ```
