@@ -26,48 +26,44 @@ library(hrbrthemes)
 #### Read in SLD
 
 ```{r}
-SLD <- read_csv("data/SLD.csv", show_col_types = FALSE)
+SLD <- read_csv("NewYork_SanFrancisco_data.csv", show_col_types = FALSE)
 ```
 
 ```{r}
-View(SLD)
-```
-
-
-```{r}
-colnames(SLD)
-Ranking_SLD <- subset(SLD, select = c(NatWalkInd, D2A_Ranked, D2B_Ranked, D3B_Ranked, D4A_Ranked))
-
-favstats (~NatWalkInd, data =SLD )
-```
-
-
-```{r}
-
-```
-
-
-```{r}
-modSLD <- subset(SLD, select = c(NatWalkInd, AutoOwn0, Pct_AO0, AutoOwn1, Pct_AO1))
-ggpairs(modSLD)
-```
-
-```{r}
-NewYork_SanFrancisco_data <- SLD %>%
-  filter(CSA_Name == "New York-Newark, NY-NJ-CT-PA" | CSA_Name == "San Jose-San Francisco-Oakland, CA")
-
-write.csv(NewYork_SanFrancisco_data, "C:/Users/llync/Documents/GitHub/STAT230-FinalGroupProject/data/NewYork_SanFrancisco_data.csv")
-
-NewYork_data_Walkability_Index <- NewYork_SanFrancisco_data%>%
-  filter(CSA_Name == "New York-Newark, NY-NJ-CT-PA")
-
-SanFrancisco_data_Walkability_Index <- NewYork_SanFrancisco_data%>%
+SanFrancisco_data <- NewYork_SanFrancisco_data%>%
   filter(CSA_Name == "San Jose-San Francisco-Oakland, CA")
+```
 
-#SanFran_NewYork_bindcols <-
-#  bind_cols(NewYork_data_Walkability_Index, SanFrancisco_data_Walkability_Index)
+```{r}
+# Function to create density plots for all numeric variables
+create_density_plots <- function(data) {
+ # Filter numeric variables
+ numeric_vars <- sapply(data, is.numeric)
+  
+ # Iterate over numeric variables and create density plots
+ for (var in names(numeric_vars)[numeric_vars]) {
+    # Create density plot for each variable
+    plot <- gf_density(~get(var), data = data, fill = ~var, title = paste("Density Plot of", var))
+    print(plot)
+ }
+}
 
-gf_dhistogram (~NatWalkInd, data =NewYork_data, bins=10 )%>%
+# Call the function with dataset
+create_density_plots(SanFrancisco_data)
+
+```
+
+```{r}
+#initial test of vars in lm
+lmTest <- lm(CBSA_POP, BSA_EMP,data = NewYork_SanFrancisco_data)
+
+msummary(lmTest)
+```
+
+
+```{r}
+
+gf_dhistogram (~NatWalkInd, data =SanFrancisco_data, bins=10 )%>%
   gf_density()
 
 library(ggplot2)
@@ -83,9 +79,4 @@ p <- ggplot() +
   theme_ipsum() +
   xlab("value of x")
 p
-
-
-
-
 ```
-
