@@ -29,6 +29,54 @@ library(stringr)
 
 
 
+
+
+```{r}
+SLD <- read_csv("data/NewYork_SanFrancisco_data.csv", show_col_types = FALSE)
+
+create_density_plots_all <- function(data, start_col, end_col) {
+  numeric_vars <- names(data)[sapply(data, is.numeric)]
+  selected_vars <- numeric_vars[start_col:end_col]
+  
+  for (var in selected_vars) {
+    # Create density plot for each variable
+    plot <- gf_density(as.formula(paste("~", var)), data = data, fill = ~CBSA_Name,  
+                       title = paste("Density Plot of", var, "With Counties"))
+    print(plot)
+  }
+}
+
+```
+```{r}
+unique(SLD$CBSA_Name)
+```
+
+```{r}
+unique(SLD$CBSA_Name)
+```
+
+```{r}
+create_density_plots_all(SLD, 13, 33)
+```
+
+
+```{r}
+create_density_plots_all(SLD, 34, 54)
+```
+
+
+```{r}
+create_density_plots_all(SLD, 55, 76)
+```
+
+```{r}
+create_density_plots_all(SLD, 78, 98)
+```
+
+```{r}
+create_density_plots_all(SLD, 99, 118)
+```
+
 ```{r}
 NewYork_SanFrancisco_data <- read_csv("data/NewYork_SanFrancisco_data.csv", show_col_types = FALSE)
 
@@ -62,23 +110,28 @@ create_density_plots_subset <- function(data, start_col, end_col) {
 ```
 
 ```{r}
-create_density_plots_subset(NewYork_SanFrancisco_data, 1, 25)
+create_density_plots_subset(NewYork_SanFrancisco_data, 13, 33)
 ```
 
 
 ```{r}
-create_density_plots_subset(NewYork_SanFrancisco_data, 26, 51)
+create_density_plots_subset(NewYork_SanFrancisco_data, 34, 54)
 ```
 
 
 ```{r}
-create_density_plots_subset(NewYork_SanFrancisco_data, 52, 76)
+create_density_plots_subset(NewYork_SanFrancisco_data, 55, 75)
 ```
 
 ```{r}
-create_density_plots_subset(NewYork_SanFrancisco_data, 77, 118)
+create_density_plots_subset(NewYork_SanFrancisco_data, 76, 96)
 ```
 
+
+```{r}
+create_density_plots_subset(NewYork_SanFrancisco_data, 97, 118)
+
+```
 
 
 # For columns 11 to 20:
@@ -103,7 +156,7 @@ NewYork_SanFrancisco_data$CSA_Name_ABBREV <- gsub("San Jose-San Francisco-Oaklan
 NY_SF_focus <- NewYork_SanFrancisco_data %>%
   select(NatWalkInd, CSA_Name_ABBREV, Ac_Unpr, P_WrkAge, P_WrkAge, Pct_AO0, Pct_AO1, Pct_AO2p, R_LowWageWk, R_MedWageWk, R_HiWageWk, R_PCTLOWWAGE, E_LowWageWk, E_MedWageWk, E_HiWageWk, E_PctLowWage, D5AR, D5AE, D5BR, D5BE, D2A_JPHH, D2A_WRKEMP, D3AAO, D3AMM, D3APO)
 
-create_density_plots_subset(NewYork_SanFrancisco_data, 77, 118)
+
 ```
 
 ```{r, warnings=FALSE}
