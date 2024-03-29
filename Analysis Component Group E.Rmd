@@ -31,7 +31,7 @@ library(stringr)
 
 
 ```{r}
-SLD <- read_csv("data/NewYork_SanFrancisco_data.csv", show_col_types = FALSE)
+SLD <- read_csv("data/SLD.csv", show_col_types = FALSE)
 
 create_density_plots_all <- function(data, start_col, end_col) {
   numeric_vars <- names(data)[sapply(data, is.numeric)]
@@ -45,44 +45,43 @@ create_density_plots_all <- function(data, start_col, end_col) {
   }
 }
 
-```
-
-
-```{r}
-create_density_plots_all(SLD, 13, 33)
-```
-
-
-```{r}
-create_density_plots_all(SLD, 34, 54)
-```
-
-
-```{r}
-create_density_plots_all(SLD, 55, 76)
-```
-
-```{r}
-create_density_plots_all(SLD, 78, 98)
-```
-
-```{r}
-create_density_plots_all(SLD, 99, 118)
-```
-
-
-
-```{r}
-unique(SLD$CBSA_Name)
-```
-
-```{r}
-unique(SLD$CSA_Name)
-```
-
-```{r}
 NewYork_SanFrancisco_data <- read_csv("data/NewYork_SanFrancisco_data.csv", show_col_types = FALSE)
+
 ```
+
+
+```{r}
+create_density_plots_all(NewYork_SanFrancisco_data, 13, 33)
+```
+
+
+```{r}
+create_density_plots_all(NewYork_SanFrancisco_data, 34, 54)
+```
+
+
+```{r}
+create_density_plots_all(NewYork_SanFrancisco_data, 55, 76)
+```
+
+```{r}
+create_density_plots_all(NewYork_SanFrancisco_data, 78, 98)
+```
+
+```{r}
+create_density_plots_all(NewYork_SanFrancisco_data, 99, 118)
+```
+
+
+
+```{r}
+#unique(SLD$CBSA_Name)
+```
+
+```{r}
+#unique(SLD$CSA_Name)
+```
+
 
 ```{r}
 unique(NewYork_SanFrancisco_data$CBSA_Name)
@@ -107,6 +106,7 @@ NewYork_SanFrancisco_data <- na.omit(NewYork_SanFrancisco_data)
 
 #Univariate Analysis: 
 ```{r}
+
 create_density_plots_subset <- function(data, start_col, end_col) {
   numeric_vars <- names(data)[sapply(data, is.numeric)]
   selected_vars <- numeric_vars[start_col:end_col]
