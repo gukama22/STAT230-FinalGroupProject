@@ -33,6 +33,9 @@ library(stringr)
 ```{r}
 SLD <- read_csv("data/SLD.csv", show_col_types = FALSE)
 
+SLD.CA <- SLD %>%
+  
+  filter (endsWith(CBSA_Name, "CA"))
 create_density_plots_all <- function(data, start_col, end_col) {
   numeric_vars <- names(data)[sapply(data, is.numeric)]
   selected_vars <- numeric_vars[start_col:end_col]
@@ -45,37 +48,36 @@ create_density_plots_all <- function(data, start_col, end_col) {
   }
 }
 
-NewYork_SanFrancisco_data <- read_csv("data/NewYork_SanFrancisco_data.csv", show_col_types = FALSE)
 
 ```
 
 
 ```{r}
-create_density_plots_all(NewYork_SanFrancisco_data, 13, 33)
+create_density_plots_all(SLD.CA, 13, 33)
 ```
 
 
 ```{r}
-create_density_plots_all(NewYork_SanFrancisco_data, 34, 54)
+create_density_plots_all(SLD.CA, 34, 54)
 ```
 
 
 ```{r}
-create_density_plots_all(NewYork_SanFrancisco_data, 55, 76)
+create_density_plots_all(SLD.CA, 55, 76)
 ```
 
 ```{r}
-create_density_plots_all(NewYork_SanFrancisco_data, 78, 98)
+create_density_plots_all(SLD.CA, 78, 98)
 ```
 
 ```{r}
-create_density_plots_all(NewYork_SanFrancisco_data, 99, 118)
+create_density_plots_all(SLD.CA, 99, 118)
 ```
 
 
 
 ```{r}
-#unique(SLD$CBSA_Name)
+unique(SLD.CA$CBSA_Name)
 ```
 
 ```{r}
@@ -88,7 +90,7 @@ unique(NewYork_SanFrancisco_data$CBSA_Name)
 ```
 
 ```{r}
-unique(NewYork_SanFrancisco_data$CSA_Name)
+unique(SLD.CA$CSA_Name)
 ```
 
 
@@ -96,10 +98,10 @@ unique(NewYork_SanFrancisco_data$CSA_Name)
 ```{r}
 
 
-names(NewYork_SanFrancisco_data)
+names(SLD.CA)
 
 #removing missing values. 
-NewYork_SanFrancisco_data <- na.omit(NewYork_SanFrancisco_data)
+SLD.CA <- na.omit(SLD.CA)
 ```
 
 
@@ -127,26 +129,26 @@ create_density_plots_subset <- function(data, start_col, end_col) {
 ```
 
 ```{r}
-create_density_plots_subset(NewYork_SanFrancisco_data, 13, 33)
+create_density_plots_subset(SLD.CA, 13, 33)
 ```
 
 
 ```{r}
-create_density_plots_subset(NewYork_SanFrancisco_data, 34, 54)
+create_density_plots_subset(SLD.CA, 34, 54)
 ```
 
 
 ```{r}
-create_density_plots_subset(NewYork_SanFrancisco_data, 55, 75)
+create_density_plots_subset(SLD.CA, 55, 75)
 ```
 
 ```{r}
-create_density_plots_subset(NewYork_SanFrancisco_data, 76, 96)
+create_density_plots_subset(SLD.CA, 76, 96)
 ```
 
 
 ```{r}
-create_density_plots_subset(NewYork_SanFrancisco_data, 97, 118)
+create_density_plots_subset(SLD.CA, 97, 118)
 
 ```
 
@@ -156,29 +158,28 @@ create_density_plots_subset(NewYork_SanFrancisco_data, 97, 118)
 
 #Selecting Variables (there is way too many of them to run ggpairs on all of them)
 ```{r, warning = FALSE}
-NewYork_SanFrancisco_data <- NewYork_SanFrancisco_data %>%
-  dplyr::mutate(CSA_Name_ABBREV = gsub("New York-Newark, NY-NJ-CT-PA", "NY", CSA_Name)) %>%
-  mutate(CSA_Name_ABBREV = gsub("San Jose-San Francisco-Oakland, CA", "SF", CSA_Name))
+
+unique (SLD.CA$CSA_Name)
+SLD.CA.update <- SLD.CA %>%
+  mutate(CSA_Name_ABBREV = gsub("San Jose-San Francisco-Oakland, CA", "SJSFO", CSA_Name)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Los Angeles-Long Beach, CA", "LLB", CSA_Name_ABBREV)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Fresno-Madera-Hanford, CA", "FMH", CSA_Name_ABBREV)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Sacramento-Roseville, CA", "SR", CSA_Name_ABBREV)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Redding-Red Bluff, CA", "RRB", CSA_Name_ABBREV))
 
 # Remove leading and trailing whitespace
-NewYork_SanFrancisco_data$CSA_Name_ABBREV <- trimws(NewYork_SanFrancisco_data$CSA_Name_ABBREV)
+SLD.CA.update$CSA_Name_ABBREV <- trimws(SLD.CA.update$CSA_Name_ABBREV)
 
-# Replace "New York-Newark, NY-NJ-CT-PA" with "NY"
-NewYork_SanFrancisco_data$CSA_Name_ABBREV <- gsub("New York-Newark, NY-NJ-CT-PA", "NY", NewYork_SanFrancisco_data$CSA_Name_ABBREV)
-
-# Replace "San Jose-San Francisco-Oakland, CA" with "SF"
-NewYork_SanFrancisco_data$CSA_Name_ABBREV <- gsub("San Jose-San Francisco-Oakland, CA", "SF", NewYork_SanFrancisco_data$CSA_Name_ABBREV)
   
-  
-NY_SF_focus <- NewYork_SanFrancisco_data %>%
+SLD.CA.update.focus <- SLD.CA.update %>%
   select(NatWalkInd, CSA_Name_ABBREV, Ac_Unpr, P_WrkAge, P_WrkAge, Pct_AO0, Pct_AO1, Pct_AO2p, R_LowWageWk, R_MedWageWk, R_HiWageWk, R_PCTLOWWAGE, E_LowWageWk, E_MedWageWk, E_HiWageWk, E_PctLowWage, D5AR, D5AE, D5BR, D5BE, D2A_JPHH, D2A_WRKEMP, D3AAO, D3AMM, D3APO)
 
-
+unique(SLD.CA.update$CSA_Name_ABBREV)
 ```
 
 ```{r, warnings=FALSE}
-plot_1 <- suppressWarnings(GGally::ggpairs(NY_SF_focus[, c(1, 3:7)], 
-        aes(color = NY_SF_focus$CSA_Name_ABBREV),
+plot_1 <- suppressWarnings(GGally::ggpairs(SLD.CA.update.focus[, c(1, 3:5)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
         title = "Scatterplot marix of NatWalkability Index Grouped by city", 
         subtitle = "Using the first 4 potential predictors"))
 plot_1
@@ -187,26 +188,38 @@ plot_1
 
 ```{r, warning=FALSE}
 
-GGally::ggpairs(NY_SF_focus[, c(1, 8:12)], 
-        aes(color = NY_SF_focus$CSA_Name_ABBREV),
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 6:9)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
         title = "Scatterplot marix of NatWalkability Index Grouped by city", 
         subtitle = "Using the next 5 potential predictors")
 ```
 
 ```{r, warning=FALSE}
-GGally::ggpairs(NY_SF_focus[, c(1, 13:19)], 
-        aes(color = NY_SF_focus$CSA_Name_ABBREV),
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 10:12)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
         title = "Scatterplot marix of NatWalkability Index Grouped by city", 
         subtitle = "Using the following 5 potential predictors")
 ```
 
 ```{r, warning=FALSE}
-GGally::ggpairs(NY_SF_focus[, c(1, 20:24)], 
-        aes(color = NY_SF_focus$CSA_Name_ABBREV),
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 13:15)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
         title = "Scatterplot marix of NatWalkability Index Grouped by city", 
         subtitle = "Using the last 4 potential predictors")
 ```
 
 
+```{r}
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 15:17)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the last 4 potential predictors")
+```
 
+```{r}
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 18:19)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the last 4 potential predictors")
+```
 
