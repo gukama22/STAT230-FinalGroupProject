@@ -52,15 +52,24 @@ create_density_plots_all <- function(data, start_col, end_col) {
 ```{r}
 #removing missing values. 
 SLD.CA <- na.omit(SLD.CA)
-SLD.CA
 ```
 
-#### sampling 
+#### sampling (conservative, sample n = 377)
 
 ```{r}
-##used seed 1, we can change the seed if we want a different sample
+## set seed for consistency in sample
 set.seed(1)
-## sampling approximately 2% of CA block groups (377)
-sampleSLD.CA <- SLD.CA[sample(nrow(SLD.CA), size=377)]
+sampleSLD.CA <- SLD.CA[sample(nrow(SLD.CA), size=377), ]
 sampleSLD.CA
+
+```
+
+#### sampling (conservative, sample n = 377)
+
+```{r}
+## set seed for consistency in sample
+set.seed(2)
+sampleSLD.CA <- SLD.CA[sample(nrow(SLD.CA), size=192), ]
+sampleSLD.CA
+
 ```
