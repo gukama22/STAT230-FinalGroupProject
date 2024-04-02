@@ -1,0 +1,66 @@
+---
+title: "Project Proposal - Walkability Initial Data Examination"
+author: "Group E"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r, include = FALSE}
+library(mosaic)
+options(digits = 6)
+library(Stat2Data)
+library(readr)
+library(ggformula)
+library(dplyr)
+library(hrbrthemes)
+library(stringr)
+```
+
+
+
+
+
+```{r}
+SLD <- read_csv("SLD.csv", show_col_types = FALSE)
+
+SLD.CA <- SLD %>%
+  
+  filter (endsWith(CBSA_Name, "CA"))
+create_density_plots_all <- function(data, start_col, end_col) {
+  numeric_vars <- names(data)[sapply(data, is.numeric)]
+  selected_vars <- numeric_vars[start_col:end_col]
+  
+  for (var in selected_vars) {
+    # Create density plot for each variable
+    plot <- gf_density(as.formula(paste("~", var)), data = data, fill = ~CBSA_Name,  
+                       title = paste("Density Plot of", var, "With Counties"))
+    print(plot)
+  }
+}
+
+
+```
+
+```{r}
+#removing missing values. 
+SLD.CA <- na.omit(SLD.CA)
+SLD.CA
+```
+
+#### sampling 
+
+```{r}
+##used seed 1, we can change the seed if we want a different sample
+set.seed(1)
+## sampling approximately 2% of CA block groups (377)
+sampleSLD.CA <- SLD.CA[sample(nrow(SLD.CA), size=377)]
+sampleSLD.CA
+```
