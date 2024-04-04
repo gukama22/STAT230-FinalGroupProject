@@ -1,0 +1,319 @@
+---
+title: "Analysis Component Group E"
+author: "E. Hauge, G. Henry, L. Kaminka"
+date: "2024-03-28"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+
+---
+
+```{r, include = FALSE}
+library(mosaic)
+options(digits = 6)
+library(Stat2Data)
+library(readr)
+library(ggformula)
+library(dplyr)
+library(hrbrthemes)
+library(stringr)
+```
+
+
+
+
+
+```{r}
+SLD <- read_csv("data/SLD.csv", show_col_types = FALSE)
+
+SLD.CA <- SLD %>%
+  
+  filter (endsWith(CBSA_Name, "CA"))
+create_density_plots_all <- function(data, start_col, end_col) {
+  numeric_vars <- names(data)[sapply(data, is.numeric)]
+  selected_vars <- numeric_vars[start_col:end_col]
+  
+  for (var in selected_vars) {
+    # Create density plot for each variable
+    plot <- gf_density(as.formula(paste("~", var)), data = data, fill = ~CBSA_Name,  
+                       title = paste("Density Plot of", var, "With Counties"))
+    print(plot)
+  }
+}
+
+
+```
+
+
+```{r}
+create_density_plots_all(SLD.CA, 13, 33)
+```
+
+
+```{r}
+create_density_plots_all(SLD.CA, 34, 54)
+```
+
+
+```{r}
+create_density_plots_all(SLD.CA, 55, 76)
+```
+
+```{r}
+create_density_plots_all(SLD.CA, 78, 98)
+```
+
+```{r}
+create_density_plots_all(SLD.CA, 99, 118)
+```
+
+
+
+```{r}
+unique(SLD.CA$CBSA_Name)
+```
+
+```{r}
+
+unique(SLD.CA$CBSA_Name)
+unique(SLD.CA$CSA_Name)
+```
+
+
+
+```{r}
+
+
+names(SLD.CA)
+
+#removing missing values. 
+SLD.CA <- na.omit(SLD.CA)
+```
+
+
+
+#Univariate Analysis: 
+```{r}
+
+create_density_plots_subset <- function(data, start_col, end_col) {
+  numeric_vars <- names(data)[sapply(data, is.numeric)]
+  selected_vars <- numeric_vars[start_col:end_col]
+  
+  for (var in selected_vars) {
+    # Create density plot for each variable
+    plot <- gf_density(as.formula(paste("~", var)), data = data, fill = ~CSA_Name,  
+                       title = paste("Density Plot of", var))
+    print(plot)
+  }
+}
+
+# Function to create density plots for all numeric variables
+
+
+# Example usage:
+# Assuming 'data' is your dataset and you want to create density plots for columns 1 to 10:
+```
+
+```{r}
+create_density_plots_subset(SLD.CA, 13, 33)
+```
+
+
+```{r}
+create_density_plots_subset(SLD.CA, 34, 54)
+```
+
+
+```{r}
+create_density_plots_subset(SLD.CA, 55, 75)
+```
+
+```{r}
+create_density_plots_subset(SLD.CA, 76, 96)
+```
+
+
+```{r}
+create_density_plots_subset(SLD.CA, 97, 118)
+
+```
+
+
+# For columns 11 to 20:
+
+
+#Selecting Variables (there is way too many of them to run ggpairs on all of them)
+```{r, warning = FALSE}
+
+unique (SLD.CA$CSA_Name)
+SLD.CA.update <- SLD.CA %>%
+  mutate(CSA_Name_ABBREV = gsub("San Jose-San Francisco-Oakland, CA", "SJSFO", CSA_Name)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Los Angeles-Long Beach, CA", "LLB", CSA_Name_ABBREV)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Fresno-Madera-Hanford, CA", "FMH", CSA_Name_ABBREV)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Sacramento-Roseville, CA", "SR", CSA_Name_ABBREV)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Redding-Red Bluff, CA", "RRB", CSA_Name_ABBREV))
+
+# Remove leading and trailing whitespace
+SLD.CA.update$CSA_Name_ABBREV <- trimws(SLD.CA.update$CSA_Name_ABBREV)
+
+  
+SLD.CA.update.focus <- SLD.CA.update %>%
+  select(NatWalkInd, CSA_Name_ABBREV, Ac_Unpr, P_WrkAge, P_WrkAge, Pct_AO0, Pct_AO1, Pct_AO2p, R_LowWageWk, R_MedWageWk, R_HiWageWk, R_PCTLOWWAGE, E_LowWageWk, E_MedWageWk, E_HiWageWk, E_PctLowWage, D5AR, D5AE, D5BR, D5BE, D2A_JPHH, D2A_WRKEMP, D3AAO, D3AMM, D3APO)
+
+ncol(SLD.CA.update.focus)
+unique(SLD.CA.update$CSA_Name_ABBREV)
+```
+
+```{r, warnings=FALSE}
+plot_1 <- suppressWarnings(GGally::ggpairs(SLD.CA.update.focus[, c(1, 3:5)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the first 4 potential predictors"))
+plot_1
+```
+
+
+```{r, warning=FALSE}
+
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 6:9)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the next 5 potential predictors")
+```
+
+```{r, warning=FALSE}
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 10:12)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the following 5 potential predictors")
+```
+
+```{r, warning=FALSE}
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 13:15)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the last 4 potential predictors")
+```
+
+
+```{r}
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 15:17)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the last 4 potential predictors")
+```
+
+```{r}
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 18:19)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the last 4 potential predictors")
+```
+
+
+##Sampling Process 1 
+```{r}
+
+
+
+SLD.CA.update <- SLD.CA %>%
+  mutate(CSA_Name_ABBREV = gsub("San Jose-San Francisco-Oakland, CA", "SJSFO", CSA_Name)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Los Angeles-Long Beach, CA", "LLB", CSA_Name_ABBREV)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Fresno-Madera-Hanford, CA", "FMH", CSA_Name_ABBREV)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Sacramento-Roseville, CA", "SR", CSA_Name_ABBREV)) %>%
+  mutate(CSA_Name_ABBREV = gsub("Redding-Red Bluff, CA", "RRB", CSA_Name_ABBREV))
+
+# Remove leading and trailing whitespace
+SLD.CA.update$CSA_Name_ABBREV <- trimws(SLD.CA.update$CSA_Name_ABBREV)
+
+## set seed for consistency in sample
+SLD.CA.CSA.Focus<- SLD.CA.update %>%
+  filter(CSA_Name == "San Jose-San Francisco-Oakland, CA")
+
+set.seed(1)
+sample.SLD.CA.CSA.Focus <- SLD.CA.CSA.Focus[sample(nrow(SLD.CA.CSA.Focus), size=377), ]
+
+
+```
+
+##After first pre-selection
+```{r}
+sample.SLD.CA.CSA.Focus.update <- sample.SLD.CA.CSA.Focus %>%
+  select(NatWalkInd, CSA_Name_ABBREV, Ac_Unpr, P_WrkAge, P_WrkAge, Pct_AO0, Pct_AO1, Pct_AO2p, R_LowWageWk, R_MedWageWk, R_HiWageWk, R_PCTLOWWAGE, E_LowWageWk, E_MedWageWk, E_HiWageWk, E_PctLowWage, D5AR, D5AE, D5BR, D5BE, D2A_JPHH, D2A_WRKEMP, D3AAO, D3AMM, D3APO)
+```
+
+
+
+#plotting the density plots
+```{r, warnings=FALSE}
+GGally::ggpairs(sample.SLD.CA.CSA.Focus.update[, c(1, 3:9)], 
+        title = "Scatterplot marix of NatWalkability Index for sample")
+```
+
+
+```{r, warning=FALSE}
+
+GGally::ggpairs(sample.SLD.CA.CSA.Focus.update[, c(1, 10:14)], 
+        title = "Scatterplot marix of NatWalkability Index for sample")
+```
+
+```{r, warning=FALSE}
+GGally::ggpairs(sample.SLD.CA.CSA.Focus.update[, c(1, 15:19)], 
+        title = "Scatterplot marix of NatWalkability Index Grouped by city")
+```
+
+
+##plotting the favstats: 
+
+```{r, warnings=FALSE}
+plot_1 <- suppressWarnings(GGally::ggpairs(SLD.CA.update.focus[, c(1, 3:5)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the first 4 potential predictors"))
+plot_1
+```
+
+
+```{r, warning=FALSE}
+
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 6:9)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the next 5 potential predictors")
+```
+
+```{r, warning=FALSE}
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 10:12)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the following 5 potential predictors")
+```
+
+```{r, warning=FALSE}
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 13:15)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the last 4 potential predictors")
+```
+
+
+```{r}
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 15:17)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the last 4 potential predictors")
+```
+
+```{r}
+GGally::ggpairs(SLD.CA.update.focus[, c(1, 18:19)], 
+        aes(color = SLD.CA.update.focus$CSA_Name_ABBREV),
+        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
+        subtitle = "Using the last 4 potential predictors")
+```
