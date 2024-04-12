@@ -22,112 +22,58 @@ library(ggformula)
 library(dplyr)
 library(hrbrthemes)
 library(stringr)
+library(GGally)
 ```
-
-
-
 
 
 ```{r}
 SLD <- read_csv("SLD.csv", show_col_types = FALSE)
 
-SLD.CA <- SLD %>%
-  
-  filter (endsWith(CBSA_Name, "CA"))
-create_density_plots_all <- function(data, start_col, end_col) {
-  numeric_vars <- names(data)[sapply(data, is.numeric)]
-  selected_vars <- numeric_vars[start_col:end_col]
-  
-  for (var in selected_vars) {
-    # Create density plot for each variable
-    plot <- gf_density(as.formula(paste("~", var)), data = data, fill = ~CBSA_Name,  
-                       title = paste("Density Plot of", var, "With Counties"))
-    print(plot)
-  }
-}
-
-
-```
-
-```{r}
-#removing missing values. 
+#CA data
+SLD.CA <- SLD %>% filter (endsWith(CBSA_Name, "CA"))
 SLD.CA <- na.omit(SLD.CA)
-```
 
-#### sampling (conservative, sample n = 377)
+#SF data
+SLD.SF <- SLD %>% filter (str_detect(CBSA_Name, "San Francisco"))
 
-```{r}
-## set seed for consistency in sample
-set.seed(1)
-sample1SLD.CA <- SLD.CA[sample(nrow(SLD.CA), size=377), ]
-sample1SLD.CA
+
 
 ```
 
-#### sampling (conservative, sample n = 377)
-
-```{r}
-## set seed for consistency in sample
-set.seed(2)
-sample2SLD.CA <- SLD.CA[sample(nrow(SLD.CA), size=192), ]
-sample2SLD.CA
-
-```
-
-#Univariate Analysis: 
-```{r}
-
-create_density_plots_subset <- function(data, start_col, end_col) {
-  numeric_vars <- names(data)[sapply(data, is.numeric)]
-  selected_vars <- numeric_vars[start_col:end_col]
-  
-  for (var in selected_vars) {
-    # Create density plot for each variable
-    plot <- gf_density(as.formula(paste("~", var)), data = data, fill = ~CSA_Name,  
-                       title = paste("Density Plot of", var))
-    print(plot)
-  }
-}
-
-# Function to create density plots for all numeric variables
-
-
-# Example usage:
-# Assuming 'data' is your dataset and you want to create density plots for columns 1 to 10:
-```
-
-#### abbreviation
-```{r, warning = FALSE}
-
-unique (sample1SLD.CA$CSA_Name)
-SLD.CA.update <- sample1SLD.CA %>%
-  mutate(CSA_Name_ABBREV = gsub("San Jose-San Francisco-Oakland, CA", "SJSFO", CSA_Name)) %>%
-  mutate(CSA_Name_ABBREV = gsub("Los Angeles-Long Beach, CA", "LLB", CSA_Name_ABBREV)) %>%
-  mutate(CSA_Name_ABBREV = gsub("Fresno-Madera-Hanford, CA", "FMH", CSA_Name_ABBREV)) %>%
-  mutate(CSA_Name_ABBREV = gsub("Sacramento-Roseville, CA", "SR", CSA_Name_ABBREV)) %>%
-  mutate(CSA_Name_ABBREV = gsub("Redding-Red Bluff, CA", "RRB", CSA_Name_ABBREV))
-
-# Remove leading and trailing whitespace
-SLD.CA.update$CSA_Name_ABBREV <- trimws(SLD.CA.update$CSA_Name_ABBREV)
-```
 
 #### mutation/transformation ideas
 ```{r}
-SLD.CA.update <- mutate(SLD.CA.update, logPct_AO1 = log(Pct_AO1))
+#New Var Transformations
 
-SLD.CA.update <- mutate(SLD.CA.update, sqrtPct_AO1 = sqrt(Pct_AO1))
+SLD.CA <- mutate(SLD.CA, sqrtD5BE = (D5BE)^0.5)
+SLD.CA <- mutate(SLD.CA, cubeP_WrkAge = (P_WrkAge)^1/3)
+SLD.CA <- mutate(SLD.CA, sqrtD3BPO3 = sqrt(D3BPO3))
 
-SLD.CA.update <- mutate(SLD.CA.update, sqPct_AO1 = (Pct_AO1)^2)
+#Variable Density Plots
+gf_density(~sqrtD5BE, data = SLD.CA)
+gf_density(~Pct_AO2p, data = SLD.CA)
+gf_density(~cubeP_WrkAge, data = SLD.CA)
+gf_density(~D5CRI, data = SLD.CA)
+gf_density(~sqrtD3BPO3, data = SLD.CA)
 
-names(SLD.CA.update)
+#
+gf_density(~NatWalkInd, data = SLD.CA)
+
+
+names(SLD.CA)
 ```
 
 ```{r, warning=FALSE}
+ggpairs(SLD.CA[c("NatWalkInd", "cubeP_WrkAge", "D5CRI", "sqrtD5BE", "sqrtD3BPO3")], 
+        title = "GGPairs of NatWalkability Index against cubeP_WrkAge and D5CRI")
+      
+      
+ggpairs(SLD.CA.update[c("NatWalkInd", "Pct_AO2p")], 
+        title = "GGPairs of NatWalkability Index against Pct_AO2p")
 
-GGally::ggpairs(SLD.CA.update[, c(1, 115, 26, 121, 120)], 
-        aes(color = SLD.CA.update$CSA_Name_ABBREV),
-        title = "Scatterplot marix of NatWalkability Index Grouped by city", 
-        subtitle = "Using the next 5 potential predictors")
+mod = lm(NatWalkInd ~ cubeP_WrkAge + D5CRI + sqrtD5BE + sqrtD3BPO3 + Pct_AO2p  ,data = SLD.CA)
+
+msummary(mod)
 ```
 
 
