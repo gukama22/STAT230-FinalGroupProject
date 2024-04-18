@@ -1,0 +1,67 @@
+---
+title: "Project Proposal - Walkability Initial Data Examination"
+author: "Group E"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r, include = FALSE}
+library(mosaic)
+options(digits = 6)
+library(Stat2Data)
+library(readr)
+library(ggformula)
+library(dplyr)
+library(hrbrthemes)
+library(stringr)
+library(GGally)
+```
+
+
+```{r}
+SLD <- read_csv("SLD.csv", show_col_types = FALSE)
+
+#CA data
+SLD.CA <- SLD %>% filter (endsWith(CBSA_Name, "CA"))
+SLD.CA <- na.omit(SLD.CA)
+
+#SF data
+SLD.SF <- SLD %>% filter (str_detect(CBSA_Name, "San Francisco"))
+
+
+
+```
+
+
+#### mutation/transformation ideas
+```{r}
+#New Var Transformations
+
+SLD.SF <- mutate(SLD.SF, sqrtD5BE = (D5BE)^(1/2))
+SLD.SF <- mutate(SLD.SF, cubeP_WrkAge = (P_WrkAge)^(1/3))
+SLD.SF <- mutate(SLD.SF, sqrtD3BPO3 = sqrt(D3BPO3))
+
+names(SLD.SF)
+```
+
+## Model
+```{r, warning=FALSE}
+
+mod = lm(NatWalkInd ~ cubeP_WrkAge + D5CRI + sqrtD5BE + sqrtD3BPO3 + Pct_AO2p  ,data = SLD.SF)
+
+msummary(mod)
+```
+
+## VIFs
+```{r}
+car::vif(mod)
+```
+
