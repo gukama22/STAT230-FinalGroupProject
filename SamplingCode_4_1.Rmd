@@ -29,51 +29,63 @@ library(GGally)
 ```{r}
 SLD <- read_csv("SLD.csv", show_col_types = FALSE)
 
-#CA data
+#CA data without SF
 SLD.CA <- SLD %>% filter (endsWith(CBSA_Name, "CA"))
+SLD.CA <- subset(SLD.CA, !grepl("San Francisco", CBSA_Name))
 SLD.CA <- na.omit(SLD.CA)
 
 #SF data
 SLD.SF <- SLD %>% filter (str_detect(CBSA_Name, "San Francisco"))
 
-
+#Her advice: create the model for San Francisco, save the coefficients/values, intercepts etc in a separate model and then just use the same model and apply it to the CA data set without any SF data. Essentially j pull all the weights, coeffs, etc and use it on the CS data without the SF entries.
 
 ```
 
 
-#### mutation/transformation ideas
+#### Mutation/transformation and filtering
 ```{r}
-#New Var Transformations
-
-SLD.CA <- mutate(SLD.CA, sqrtD5BE = (D5BE)^0.5)
-SLD.CA <- mutate(SLD.CA, cubeP_WrkAge = (P_WrkAge)^1/3)
-SLD.CA <- mutate(SLD.CA, sqrtD3BPO3 = sqrt(D3BPO3))
-
-#Variable Density Plots
-gf_density(~sqrtD5BE, data = SLD.CA)
-gf_density(~Pct_AO2p, data = SLD.CA)
-gf_density(~cubeP_WrkAge, data = SLD.CA)
-gf_density(~D5CRI, data = SLD.CA)
-gf_density(~sqrtD3BPO3, data = SLD.CA)
-
-#
-gf_density(~NatWalkInd, data = SLD.CA)
+#transformations
+SLD.SF <- mutate(SLD.SF, cubeP_WrkAge = (P_WrkAge)^1/3)
+SLD.SF <- mutate(SLD.SF, sqrtD3BPO3 = sqrt(D3BPO3))
 
 
-names(SLD.CA)
+#filtering
+SLD.SF <- filter(SLD.SF, cubeP_WrkAge > 0.13)
+SLD.SF <- filter(SLD.SF, cubeP_WrkAge < 0.28)
+
+
+SLD.SF <- filter(SLD.SF, sqrtD3BPO3 < 20)
+SLD.SF <- filter(SLD.SF, sqrtD3BPO3 > 0)
+
+
+# Density Plots (for SLD.CA because that's the data set we're predicting to)
+gf_density(~Pct_AO2p, data = SLD.SF)
+gf_density(~cubeP_WrkAge, data = SLD.SF)
+gf_density(~sqrtD3BPO3, data = SLD.SF)
 ```
 
+
+#SF Mod
 ```{r, warning=FALSE}
-ggpairs(SLD.CA[c("NatWalkInd", "cubeP_WrkAge", "D5CRI", "sqrtD5BE", "sqrtD3BPO3")], 
+#create SF mod and store
+SFmod = lm(NatWalkInd ~ cubeP_WrkAge + sqrtD3BPO3 + Pct_AO2p, data = SLD.SF)
+
+#test SF model on CA data
+CAnoSFpredict <- predict(SFmod, data = SLD.CA)
+
+msummary(SFmod)
+```
+
+
+#Variable Analysis
+```{r}
+ggpairs(SLD.SF[c("NatWalkInd", "cubeP_WrkAge", "sqrtD3BPO3")], 
         title = "GGPairs of NatWalkability Index against cubeP_WrkAge and D5CRI")
       
-      
-ggpairs(SLD.CA.update[c("NatWalkInd", "Pct_AO2p")], 
-        title = "GGPairs of NatWalkability Index against Pct_AO2p")
 
-mod = lm(NatWalkInd ~ cubeP_WrkAge + D5CRI + sqrtD5BE + sqrtD3BPO3 + Pct_AO2p  ,data = SLD.CA)
+ggpairs(SLD.SF[c("NatWalkInd", "Pct_AO2p")], 
+        title = "GGPairs of NatWalkability Index against cubeP_WrkAge and D5CRI")
 
-msummary(mod)
+car::vif(SFmod)
+
 ```
-
-
