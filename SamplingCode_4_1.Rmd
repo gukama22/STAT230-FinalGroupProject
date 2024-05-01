@@ -1,6 +1,6 @@
 ---
-title: "Project Proposal - Walkability Initial Data Examination"
-author: "Group E"
+title: "Walking Through the Golden Gate: A Comparative Study of Walkability in San Francisco and California"
+author: "Group E - Elliot Haugen, George Henry, and Lynca J Kaminka"
 output:
   pdf_document:
     fig_height: 3
@@ -14,19 +14,25 @@ output:
 ---
 
 ```{r, include = FALSE}
+
 library(mosaic)
 options(digits = 6)
 library(Stat2Data)
 library(readr)
+library(cowplot)
 library(ggformula)
+library(ggplot2)
+library(gridExtra)
 library(dplyr)
 library(hrbrthemes)
 library(stringr)
 library(GGally)
+library(car)
+
 ```
 
+```{r, echo = FALSE}
 
-```{r}
 SLD <- read_csv("SLD.csv", show_col_types = FALSE)
 
 #CA data without SF
@@ -37,21 +43,39 @@ SLD.CA <- na.omit(SLD.CA)
 #SF data
 SLD.SF <- SLD %>% filter (str_detect(CBSA_Name, "San Francisco"))
 
-#Her advice: create the model for San Francisco, save the coefficients/values, intercepts etc in a separate model and then just use the same model and apply it to the CA data set without any SF data. Essentially j pull all the weights, coeffs, etc and use it on the CS data without the SF entries.
-
 ```
 
+# **Aim**
+The goal of this study is to examine the factors that influence walkability in California. Using the factors present in the San Francisco CBSA (Core-based Statistical Area) we’ll create a linear regression model and deploy it to predict walkability scores in the rest of California. 
 
-#### Mutation/transformation and filtering
-```{r}
+# **Variables**
+The explanatory variables we settled on are: 
+
+- P_WrkAge (cubed) - percentage of block group population that is of working age
+- D3BPO3 (square root) - intersection density in pedestrian intersections per square mile
+- Pct_AO2p - percentage of households with two plus cars in block group
+
+Each of our variables is quantitative though we tried a few preliminary models using qualitative predictors. Our dataset originally contained 114 variables so we first started with a pre-selection process where we created density plots for all potential explanatory variables, and removed variables that did not have normal density plots and satisfactory ggpairs. After filtering, we had 24 potential explanatory variables left which we analyzed in more detail and transformed to eventually get to the subset of predictors we have now.
+
+# **Dataset**
+
+The dataset originally contained infrastructural, economic and environmental data about every block group in the US but we narrowed it down to just California’s. Within California, there are 17 unique CBSA (Core Based Statistical Area) and five unique CSA (Combined Statistical Area). 
+
+# **Univariate Analysis**
+
+To begin, the density plots for our variables are satisfactory. The density plot of the percentage of households with two or more cars shows a moderate left skew with a single mode around 0.8 and a semi-normal shape. In context, this alludes to a majority of households in San Francisco possessing 2 or more cars which could connect to the underlying economic and social inequities within the city. The density plot of the working age population is also quite good with one mode around 0.22 and a nearly normal if not slightly left skewed distribution. The cube rooting of this variable makes it a bit more difficult to interpret in context, but indicates that a majority of the population in the city is of working age with tails on either side corresponding to younger and older populations. Lastly, the density plot of intersection density is normal enough, with one primary mode at 12 or so and a secondary mode at 7.5. It doesn’t have any obvious skew and is also difficult to interpret in context due to the transformation being applied to it as well as the derivative nature of the original variable. In context, the distribution of this variable indicates that the majority of pedestrian intersections are moderately dense with some particularly high and low density intersections making up the tails seen on either side of the plot.
+
+## **Figure 1: Density Plots for Pct_AO2p, cubertP_WrkAge and sqrtD3BPO3**
+```{r, echo = FALSE}
+
 #transformations
-SLD.SF <- mutate(SLD.SF, cubeP_WrkAge = (P_WrkAge)^1/3)
+SLD.SF <- mutate(SLD.SF, cubertP_WrkAge = (P_WrkAge)^1/3)
 SLD.SF <- mutate(SLD.SF, sqrtD3BPO3 = sqrt(D3BPO3))
 
 
 #filtering
-SLD.SF <- filter(SLD.SF, cubeP_WrkAge > 0.13)
-SLD.SF <- filter(SLD.SF, cubeP_WrkAge < 0.28)
+SLD.SF <- filter(SLD.SF, cubertP_WrkAge > 0.13)
+SLD.SF <- filter(SLD.SF, cubertP_WrkAge < 0.28)
 
 
 SLD.SF <- filter(SLD.SF, sqrtD3BPO3 < 20)
@@ -59,33 +83,53 @@ SLD.SF <- filter(SLD.SF, sqrtD3BPO3 > 0)
 
 
 # Density Plots (for SLD.CA because that's the data set we're predicting to)
-gf_density(~Pct_AO2p, data = SLD.SF)
-gf_density(~cubeP_WrkAge, data = SLD.SF)
-gf_density(~sqrtD3BPO3, data = SLD.SF)
+
+plot1 <- gf_density(~Pct_AO2p, data = SLD.SF) + ggtitle("Pct_AO2p Density")
+plot2 <- gf_density(~cubertP_WrkAge, data = SLD.SF) + ggtitle("cubertP_WrkAge Density")
+plot3 <- gf_density(~sqrtD3BPO3, data = SLD.SF) + ggtitle("sqrtD3BPO3 Density") 
+
+# Combine the plots
+grid.arrange(plot1, plot2, plot3, ncol = 2, nrow = 2)
+
+```
+
+# **Bivariate Analysis**
+
+After verifying the density plots of our variables, we used ggpairs and a VIF test to ensure there weren't any issues with collinearity between variables and to better understand the relationships between our variables and the walkability scores observed in San Francisco. Looking at the correlations between each of our predictors, there don’t seem to be any issues of collinearity. All variables have correlations of at most -0.373 with one another (Pct_AO2p and sqrtD3BPO3) which is well below the threshold for concern. That being said, the scatterplots for each variable are a bit concerning due to the sheer quantity of points and general lack of a clear relationship/correlation to the walkability index score of a given block group. Moreover, the strongest predictor we have is the percentage of households with adults owning 2+ cars at -0.524 correlation, which is only moderately strong. Looking at the VIF scores for our selected predictors, there are clearly no issues as the maximum VIF score we found was 1.17282, which is well below the cut off VIF value of 5.
+
+
+```{r echo = FALSE}
+
+#create SF mod and store
+SFmod = lm(NatWalkInd ~ cubertP_WrkAge + sqrtD3BPO3 + Pct_AO2p, data = SLD.SF)
+
+```
+
+## **Figure 2: VIF Scores for Pct_AO2p, cubertP_WrkAge and sqrtD3BPO3**
+```{r, echo = FALSE}
+vif(SFmod)
+```
+
+## **Figure 3: GGPairs of Pct_AO2p, cubertP_WrkAge and sqrtD3BPO3**
+```{r, echo = FALSE}
+ggpairs(SLD.SF[c("NatWalkInd", "cubertP_WrkAge", "sqrtD3BPO3","Pct_AO2p")])
 ```
 
 
-#SF Mod
-```{r, warning=FALSE}
-#create SF mod and store
-SFmod = lm(NatWalkInd ~ cubeP_WrkAge + sqrtD3BPO3 + Pct_AO2p, data = SLD.SF)
+## **Figure 4: Model Summary **
 
+```{r, warning=FALSE, echo = FALSE}
 #test SF model on CA data
 CAnoSFpredict <- predict(SFmod, data = SLD.CA)
 
 msummary(SFmod)
 ```
 
+## **Figure 5: Diagnostic Plots of Model **
 
-#Variable Analysis
-```{r}
-ggpairs(SLD.SF[c("NatWalkInd", "cubeP_WrkAge", "sqrtD3BPO3")], 
-        title = "GGPairs of NatWalkability Index against cubeP_WrkAge and D5CRI")
-      
+```{r, warning=FALSE, echo = FALSE}
+# Combine the plots
+grid.arrange(mplot(which = 2, SFmod), mplot(which = 1, SFmod), ncol = 1)
 
-ggpairs(SLD.SF[c("NatWalkInd", "Pct_AO2p")], 
-        title = "GGPairs of NatWalkability Index against cubeP_WrkAge and D5CRI")
-
-car::vif(SFmod)
 
 ```
