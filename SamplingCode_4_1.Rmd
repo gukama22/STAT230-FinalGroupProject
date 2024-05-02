@@ -122,6 +122,15 @@ ggpairs(SLD.SF[c("NatWalkInd", "cubertP_WrkAge", "sqrtD3BPO3","Pct_AO2p")])
 #test SF model on CA data
 CAnoSFpredict <- predict(SFmod, data = SLD.CA)
 
+#random sample of data from CA
+set.seed(123) 
+
+randsub <- SLD.CA[sample(nrow(SLD.CA), 2588), ]
+
+r_squared <- cor(randsub$NatWalkInd, CAnoSFpredict)^2
+
+r_squared
+
 msummary(SFmod)
 ```
 
