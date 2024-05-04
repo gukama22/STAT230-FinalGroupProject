@@ -1,0 +1,191 @@
+---
+title: "Walking Through the Golden Gate: A Comparative Study of Walkability in San Francisco and California"
+author: "Group E - Elliot Haugen, George Henry, and Lynca J Kaminka"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r, include = FALSE}
+
+library(mosaic)
+options(digits = 6)
+library(Stat2Data)
+library(readr)
+library(cowplot)
+library(ggformula)
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+library(hrbrthemes)
+library(stringr)
+library(GGally)
+library(car)
+
+```
+
+```{r, echo = FALSE}
+
+SLD <- read_csv("SLD.csv", show_col_types = FALSE)
+
+#CA data without SF
+SLD.CA <- SLD %>% filter (endsWith(CBSA_Name, "CA"))
+SLD.CA <- subset(SLD.CA, !grepl("San Francisco", CBSA_Name))
+SLD.CA <- na.omit(SLD.CA)
+
+#SF data
+SLD.SF <- SLD %>% filter (str_detect(CBSA_Name, "San Francisco"))
+
+```
+
+# **Aim**
+The goal of this study is to examine the factors that influence walkability in San Francisco/California. Using the factors present in the San Francisco CBSA (Core-based Statistical Area) we’ll create a linear regression model and deploy it to predict walkability scores in San Francisco and then, as an extension, the rest of California. 
+
+# **Variables**
+The explanatory variables we settled on are: 
+
+- P_WrkAge (cube root) - percentage of block group population that is of working age
+- D3BPO3 (square root) - intersection density in pedestrian intersections per square mile
+- Pct_AO2p - percentage of households with two plus cars in block group
+
+Each of our variables is quantitative though we tried a few preliminary models using qualitative predictors. Our dataset originally contained 117 variables so we first started with a pre-selection process where we created density plots for all potential variables, and removed those that did not have normal density plots and satisfactory ggpairs. After filtering, we had 24 potential explanatory variables left which we analyzed in more detail and transformed to eventually get to the subset of predictors we have now.
+
+# **Dataset**
+
+The dataset originally contained infrastructural, economic and environmental data about every block group in the US but we narrowed it down to just California’s block groups and then further to just San Francisco's. 
+
+# **Univariate Analysis**
+
+To begin, the density plots for our variables are satisfactory. The density plot of the percentage of households with two or more cars shows a moderate left skew with a single mode around 0.8 and a semi-normal shape (see fig. 1). In context, this alludes to a majority of households in San Francisco possessing 2 or more cars which could connect to the underlying economic and social inequities within the city. The density plot of the working age population is also quite good with one mode around 0.22 and a nearly normal if not slightly left skewed distribution (see fig. 1). The cube rooting of this variable makes it a bit more difficult to interpret in context, but indicates that a majority of the population in the city is of working age with tails on either side corresponding to younger and older populations (see fig. 1). Lastly, the density plot of intersection density is normal enough, with one primary mode at 12 or so and a secondary mode at 7.5 (see fig. 1). It doesn’t have any obvious skew and is also difficult to interpret in context due to the transformation being applied to it as well as the derivative nature of the original variable. That being said, the distribution of this variable indicates that the majority of pedestrian intersections are moderately dense with some particularly high and low density intersections making up the tails seen on either side of the plot (see fig. 1).
+
+## **Figure 1: Density Plots for Pct_AO2p, cubertP_WrkAge and sqrtD3BPO3**
+```{r, echo = FALSE}
+
+#transformations
+SLD.SF <- mutate(SLD.SF, cubertP_WrkAge = (P_WrkAge)^1/3)
+SLD.SF <- mutate(SLD.SF, sqrtD3BPO3 = sqrt(D3BPO3))
+
+
+#filtering
+SLD.SF <- filter(SLD.SF, cubertP_WrkAge > 0.13)
+SLD.SF <- filter(SLD.SF, cubertP_WrkAge < 0.28)
+
+
+SLD.SF <- filter(SLD.SF, sqrtD3BPO3 < 20)
+SLD.SF <- filter(SLD.SF, sqrtD3BPO3 > 0)
+
+
+# Density Plots (for SLD.CA because that's the data set we're predicting to)
+
+plot1 <- gf_density(~Pct_AO2p, data = SLD.SF) + ggtitle("Pct_AO2p Density")
+plot2 <- gf_density(~cubertP_WrkAge, data = SLD.SF) + ggtitle("cubertP_WrkAge Density")
+plot3 <- gf_density(~sqrtD3BPO3, data = SLD.SF) + ggtitle("sqrtD3BPO3 Density") 
+
+# Combine the plots
+grid.arrange(plot1, plot2, plot3, ncol = 2, nrow = 2)
+
+```
+
+# **Bivariate Analysis**
+
+After verifying the density plots of our variables, we used ggpairs and a VIF test to ensure there weren't any issues with collinearity between variables and to better understand the relationships between our variables and the walkability scores observed in San Francisco. Looking at the correlations between each of our predictors, there don’t seem to be any issues of collinearity. All variables have correlations of at most -0.373 with one another (Pct_AO2p and sqrtD3BPO3) which is well below the threshold for concern (see fig. 3). That being said, the scatterplots for each variable are a bit concerning due to the sheer quantity of points and general lack of a clear relationship/correlation to the walkability index score of a given block group. Moreover, the strongest predictor we have is the percentage of households with adults owning 2+ cars at -0.524 correlation, which is only moderately strong (see fig. 3). Looking at the VIF scores for our selected predictors, there are clearly no issues as the maximum VIF score we found was 1.17282, which is well below the cut off VIF value of 5 (see fig. 2).
+
+
+```{r echo = FALSE}
+
+#create SF mod and store
+SFmod = lm(NatWalkInd ~ cubertP_WrkAge + sqrtD3BPO3 + Pct_AO2p, data = SLD.SF)
+
+```
+
+## **Figure 2: VIF Scores for Pct_AO2p, cubertP_WrkAge and sqrtD3BPO3**
+```{r, echo = FALSE}
+vif(SFmod)
+```
+
+## **Figure 3: GGPairs of Pct_AO2p, cubertP_WrkAge and sqrtD3BPO3**
+```{r, echo = FALSE}
+ggpairs(SLD.SF[c("NatWalkInd", "cubertP_WrkAge", "sqrtD3BPO3","Pct_AO2p")])
+```
+
+**Modeling**
+
+After completing our initial univariate and bivariate analysis, we constructed several MLR models, checking the strength of the models using various predictor selection methods and close analysis of the residual plots, QQplots and summaries for each model (see fig. NEW FIGURE INCLUDING STEPWISE AND OR MORE MODEL STUFF). Using stepwise selection in particular, we created several models with various numbers of predictors and validated them against several error measures such as Mallow’s Cp, Standardized/Studentized residuals, and Cook’s Distance. 
+
+(RUN stepwise and include as a figure)
+
+
+Below we’ve included the model summary for an initial model that we created based on stepwise selection as well as the aforementioned exploration and filtering of variables that we completed.
+
+(RERUN INITAL MODEL AND INSERT MSUMMARY HERE AS A FIGURE)
+
+
+
+After creating this initial model, we decided to remove several predictors, filter out some outliers that were diminishing our overall R-squared and experiment with a few different interaction terms and other methods for strengthening our model (see fig. 4). Many of the interaction terms were difficult to explain and did not justify the amount of variance they accounted for so we ultimately settled for the model shown below.
+
+## **Figure 4: Final Model Summary **
+
+```{r, warning=FALSE, echo = FALSE}
+
+msummary(SFmod)
+
+
+```
+
+$\widehat{Walkability Score} = 14.1449 (cubertP_WrkAge) + 0.3387 (sqrtD3BPO3) - 7.3280 (Pct_AO2p)$
+
+
+Though we only got an Adjusted R-squared value of 0.389, this model contains the most significant p values for predictors ranging from <2e - 16 to 5.7-e11 which are well below our alpha value of 0.05, the most explainable predictors due to the exclusion of interaction terms, and the most parsimonious design overall. 
+Lastly, examining the qqplot and fitted residual plots for this model, we are generally satisfied (see fig. 5). 
+
+## **Figure 5: Diagnostic Plots of Model **
+
+```{r, warning=FALSE, echo = FALSE}
+# Combine the plots
+grid.arrange(mplot(which = 2, SFmod), mplot(which = 1, SFmod), ncol = 1)
+```
+
+
+The residual vs. fitted plot has a clearly homoscedastic “horn” shape with more variance towards the lower half of the domain and less towards the upper half (see fig. 5). There are also several outliers which could potentially be removed to minimize this error but would likely just sidestep any issues with conditions. In contrast to the fitted plot, the QQplot for the model looks quite good with several values towards the upper and lower most parts of the plot deviating from the line but otherwise complete adherence to the theoretical normal line (see fig. 5). 
+
+
+**Conclusion**
+
+	The model we created using Stepwise variable selection as well as our own interpretation of the fit of variables led us to a three-predictor MLR model containing the working age population of a block group as a percentage (cubertP_WrkAge), intersection density (sqrtD3BPO3) and percentage of population with 2 or more cars (Pct_AO2p). We created this model using only data from the San Francisco CBSA and then deployed it to predict the Walkability indices of block groups in San Francisco. In the end, our model met the independence, error, linearity, and normality conditions and had an Adjusted R-squared of 0.389, meaning that our model accounted for 38.9% of the total variance in the Walkability scores of block groups in San Francisco (see fig. 4). 
+	The intercept of the model is 11.0681, indicating that the base walkability score which the model predicts in a San Francisco block group (see fig. 4). The coefficient of our percentage working age variable (cubertP_wrkAge) is 14.1449 with a p value of 5.7e-11 (see fig. 4). This means that for each one unit increase in the cubed percentage working age population of a given block group in San Francisco, the walkability score is predicted to grow by 14.1449. The coefficient for our intersection density variable (sqrtD3BPO3) is 0.3387 with a value of 2e-16 (see fig. 4). In the context of the model, for each one unit increase in the intersection density of a given block group in San Francisco, the variable predicts an increase of 0.3387 in the block group's walkability score. Finally, the coefficient of our percentage of population that owns 2 or more cars (Pct_AO2p) has a coefficient of -7.3280 and p value of 2e-16 (see fig. 4). In context, this means that for a one unit increase in the percentage of a block group's population that owns 2 or more cars within a San Francisco block group, the model predicts a decrease in the walkability score that block group in by 7.3280. 
+	Though several of these variables are derived from other measures and have been transformed, these coefficients make sense in the context of our study. The percentage of the population owning 2 or more cars having a negative coefficient makes sense as a higher concentration of car owners would likely lead to more focus on infrastructure built around that method of transportation as opposed to walking. Conversely, intersection density having a positive but small effect on predicted walkability score makes sense given the potential of intersections being used in both walkable and drivable block groups. Interpreting the influence of percentage working age on walkability score is the most difficult but again makes sense in the context of our model. As the percentage of people that are of working age increases the likelihood of other factors that enable walkability being present should also increase.
+	
+**Limitations**
+	
+  All of the variables we selected were significant predictors due to their p values being significantly less than our alpha value of 0.05, however we still were not able to create a model with a greater correlation. We believe we achieved this result because of the great variability in geographic, environmental, infrastructural, and socioeconomic factors within San Francisco. For one, San Francisco is one of the most ecologically diverse cities with dozens of biomes and microbiomes, as well as various weather conditions, and terrain within miles of eachother. There are a plethora of enviornmental factors which are likely influencing the walkability scores of given block group's that we couldn't account for in our study. Moreover, San Francisco, like many other metropolitan cities, has a history of redlining and displacement which we also couldn't account for in our model.
+  
+**Extension**
+	To strengthen this study, we would implement additional transformations, fit more interaction terms and try randomization/bootstrapping methods. We already completed several transformations on our predictor and explanatory variables, but would be interested to try additional transformations in order to find more significant results. More likely however, we believe our research question and model could benefit from randomization or bootstrapping methods, which we are all relatively inexperienced in, but could see potentially yielding significant if not interesting results. 
+	
+	As a small extension to our study, we took a random sample of block groups in California and their corresponding walkability indices and compared them to the values our own model would predict.
+	
+**Figure 6: Deployment in California **
+```{r}
+#test SF model on CA data
+CAnoSFpredict <- predict(SFmod, data = SLD.CA)
+
+#random sample of data from CA
+set.seed(123) 
+
+randsub <- SLD.CA[sample(nrow(SLD.CA), 2588), ]
+
+r_squared <- cor(randsub$NatWalkInd, CAnoSFpredict)^2
+
+r_squared
+```
+	
+	
+	When comparing these results we found an R_squared value of 2.6624e-05 (see fig. 6). This value indicates an extremely low correlation between our model's predictions and the real walkability indices as well as an extremely weak, insignificant, negative and linear relationship. Further, this result highlights the external invalidity of our model in addition to the internal invalidity we had already seen through our deployment of the model on San Francisco. Having seen this result we wonder if our model would be able to better predict walkability indices in a similar city like Seattle or if our model simply needs more factors to be taken into account in order to account for the variability and complexity of the measures which we're attempting to.
+
